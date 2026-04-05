@@ -150,25 +150,32 @@ async function getUngroupedTabs() {
 }
 
 /**
- * Sort tabs within a group by age.
+ * Sort tabs within a group by age. Locked per-group to prevent concurrent sorts.
  */
-async function handleSortByAge(groupId, direction = "oldest") {
+const sortingGroups = new Set();
+
+async function handleSortByAge(groupId, direction = "newest") {
   if (groupId === null) return { success: false, error: "Cannot sort ungrouped tabs" };
+  if (sortingGroups.has(groupId)) return { success: false, error: "Sort already in progress" };
 
-  const tabs = await browser.tabs.query({ groupId });
-  const urls = tabs.map(t => t.url).filter(Boolean);
-  const ages = await TabAge.getAges(urls);
+  sortingGroups.add(groupId);
+  try {
+    const tabs = await browser.tabs.query({ groupId });
+    const urls = tabs.map(t => t.url).filter(Boolean);
+    const ages = await TabAge.getAges(urls);
 
-  const sorted = [...tabs].sort((a, b) => {
-    const ageA = ages[a.url] || Date.now();
-    const ageB = ages[b.url] || Date.now();
-    return direction === "oldest" ? ageA - ageB : ageB - ageA;
-  });
+    const sorted = [...tabs].sort((a, b) => {
+      const ageA = ages[a.url] || Date.now();
+      const ageB = ages[b.url] || Date.now();
+      return direction === "oldest" ? ageA - ageB : ageB - ageA;
+    });
 
-  for (let i = 0; i < sorted.length; i++) {
-    await browser.tabs.move(sorted[i].id, { index: -1 });
-    await browser.tabs.group({ tabIds: [sorted[i].id], groupId });
+    const sortedIds = sorted.map(t => t.id);
+    await browser.tabs.move(sortedIds, { index: -1 });
+    await browser.tabs.group({ tabIds: sortedIds, groupId });
+
+    return { success: true };
+  } finally {
+    sortingGroups.delete(groupId);
   }
-
-  return { success: true };
 }
