@@ -170,9 +170,12 @@ async function handleSortByAge(groupId, direction = "newest") {
       return direction === "oldest" ? ageA - ageB : ageB - ageA;
     });
 
-    const sortedIds = sorted.map(t => t.id);
-    await browser.tabs.move(sortedIds, { index: -1 });
-    await browser.tabs.group({ tabIds: sortedIds, groupId });
+    // Move within the group's index range so tabs never leave the group.
+    // tabs.move inserts each array element at the target index in sequence,
+    // so reversing produces the correct final order.
+    const groupStart = Math.min(...tabs.map(t => t.index));
+    const sortedIds = sorted.map(t => t.id).reverse();
+    await browser.tabs.move(sortedIds, { index: groupStart });
 
     return { success: true };
   } finally {
