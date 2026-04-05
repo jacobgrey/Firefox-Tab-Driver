@@ -81,8 +81,8 @@ button:disabled {
   color: #888;
 }
 
-/* Groups */
-.group-row {
+/* Slots */
+.slot-row {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -90,33 +90,42 @@ button:disabled {
   font-size: 12px;
 }
 
-.group-shortcut {
+.slot-key {
   font-size: 10px;
-  color: #888;
-  background: #2b2a33;
+  font-weight: 700;
+  color: #7b68ee;
+  background: #1c1b22;
   border-radius: 3px;
-  padding: 1px 5px;
-  min-width: 18px;
+  padding: 2px 6px;
+  min-width: 20px;
   text-align: center;
 }
 
-.group-name {
+.slot-select {
   flex: 1;
+  font-size: 11px;
+  padding: 2px 4px;
+  background: #2b2a33;
+  border: 1px solid #4a4955;
+  border-radius: 3px;
+  color: #ccc;
+  cursor: pointer;
 }
 
-.group-count {
+.slot-select:focus {
+  border-color: #5b48d4;
+  outline: none;
+}
+
+.slot-count {
   font-size: 10px;
   color: #666;
+  min-width: 16px;
+  text-align: right;
 }
 
-.group-actions {
-  display: flex;
-  gap: 2px;
-}
-
-.group-actions button {
-  font-size: 9px;
-  padding: 2px 5px;
+.sort-btn {
+  margin-right: 2px;
 }
 
 /* Bulk close */

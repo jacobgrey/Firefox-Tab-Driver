@@ -18,7 +18,7 @@
 
   let ungroupedTabs = [];
   let currentIndex = 0;
-  let groupNames = [];
+  let slotAssignments = []; // { slot, groupId, title } for slots 1–10
   let groupButtons = [];
 
   function formatAge(timestamp) {
@@ -36,9 +36,9 @@
   }
 
   async function loadData() {
-    [ungroupedTabs, groupNames] = await Promise.all([
+    [ungroupedTabs, slotAssignments] = await Promise.all([
       msg({ action: "getUngroupedTabs" }),
-      msg({ action: "getGroupNames" })
+      msg({ action: "getSlotAssignments" })
     ]);
     currentIndex = 0;
   }
@@ -47,21 +47,22 @@
     groupsGrid.innerHTML = "";
     groupButtons = [];
 
-    for (let i = 0; i < groupNames.length; i++) {
+    for (const entry of slotAssignments) {
       const btn = document.createElement("button");
       btn.className = "group-btn";
+      if (!entry.groupId) btn.classList.add("unassigned");
 
       const keySpan = document.createElement("span");
       keySpan.className = "key";
-      keySpan.textContent = i === 9 ? "0" : String(i + 1);
+      keySpan.textContent = entry.slot === 10 ? "0" : String(entry.slot);
       btn.appendChild(keySpan);
 
       const nameSpan = document.createElement("span");
       nameSpan.className = "name";
-      nameSpan.textContent = groupNames[i];
+      nameSpan.textContent = entry.title || "New group";
       btn.appendChild(nameSpan);
 
-      btn.addEventListener("click", () => assignToGroup(i + 1));
+      btn.addEventListener("click", () => assignToGroup(entry.slot));
       groupsGrid.appendChild(btn);
       groupButtons.push(btn);
     }
@@ -79,11 +80,7 @@
     tabFavicon.onerror = () => { tabFavicon.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>"; };
     tabTitle.textContent = tab.title || tab.url || "New Tab";
 
-    try {
-      tabUrl.textContent = tab.url;
-    } catch {
-      tabUrl.textContent = tab.url || "";
-    }
+    tabUrl.textContent = tab.url || "";
 
     tabAge.textContent = formatAge(tab.age);
     progress.textContent = `${currentIndex + 1} / ${ungroupedTabs.length}`;

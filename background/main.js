@@ -58,8 +58,19 @@ browser.runtime.onMessage.addListener((message) => {
     case "getUngroupedTabs":
       return getUngroupedTabs();
 
-    case "getGroupNames":
-      return getGroupNames();
+    case "getSlotAssignments":
+      return TabGroups.getSlotAssignments();
+
+    case "getAllGroups":
+      return TabGroups.getAllGroups();
+
+    case "assignSlot":
+      return TabGroups.assignSlot(message.slotNumber, message.groupId)
+        .then(() => ({ success: true }));
+
+    case "unassignSlot":
+      return TabGroups.unassignSlot(message.slotNumber)
+        .then(() => ({ success: true }));
 
     case "moveTab":
       return TabGroups.moveTabToGroup(message.tabId, message.groupIndex);
@@ -89,9 +100,6 @@ browser.runtime.onMessage.addListener((message) => {
 
     case "sortByAge":
       return handleSortByAge(message.groupId, message.direction);
-
-    case "getGroups":
-      return TabGroups.getGroupsWithTabs();
 
     case "snapshotSave":
       return Snapshot.save().then(s => ({ success: true, savedAt: s.savedAt }));
@@ -127,6 +135,7 @@ async function getUngroupedTabs() {
 
   return tabs
     .filter(t =>
+      !t.pinned &&
       (t.groupId === -1 || t.groupId === undefined) &&
       (!t.url || !t.url.startsWith(extensionOrigin))
     )
@@ -138,14 +147,6 @@ async function getUngroupedTabs() {
       active: t.active,
       age: allAges[t.url] || null
     }));
-}
-
-/**
- * Get the current group names.
- */
-async function getGroupNames() {
-  const stored = await browser.storage.local.get(StorageKeys.CONFIG_GROUP_NAMES);
-  return stored[StorageKeys.CONFIG_GROUP_NAMES] || MANAGED_GROUP_NAMES;
 }
 
 /**

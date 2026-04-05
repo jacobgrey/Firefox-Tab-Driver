@@ -12,14 +12,11 @@ const ImportExport = (() => {
     const groupsWithTabs = await TabGroups.getGroupsWithTabs();
     const allAges = await TabAge.getAll();
 
-    const stored = await browser.storage.local.get([
-      StorageKeys.CONFIG_MAX_LOADED_TABS,
-      StorageKeys.CONFIG_GROUP_NAMES
-    ]);
+    const stored = await browser.storage.local.get(StorageKeys.CONFIG_MAX_LOADED_TABS);
 
     const groups = groupsWithTabs
       .filter(g => g.id !== null)
-      .map(g => ({ name: g.title, color: g.color }));
+      .map(g => ({ name: g.title, color: g.color, slot: g.managedIndex }));
 
     const tabs = [];
     for (const group of groupsWithTabs) {
@@ -38,8 +35,7 @@ const ImportExport = (() => {
       groups,
       tabs,
       config: {
-        maxLoadedTabs: stored[StorageKeys.CONFIG_MAX_LOADED_TABS] || MAX_LOADED_TABS,
-        groupNames: stored[StorageKeys.CONFIG_GROUP_NAMES] || MANAGED_GROUP_NAMES
+        maxLoadedTabs: stored[StorageKeys.CONFIG_MAX_LOADED_TABS] || MAX_LOADED_TABS
       }
     };
   }
@@ -57,9 +53,6 @@ const ImportExport = (() => {
       const configUpdate = {};
       if (data.config.maxLoadedTabs) {
         configUpdate[StorageKeys.CONFIG_MAX_LOADED_TABS] = data.config.maxLoadedTabs;
-      }
-      if (data.config.groupNames) {
-        configUpdate[StorageKeys.CONFIG_GROUP_NAMES] = data.config.groupNames;
       }
       if (Object.keys(configUpdate).length > 0) {
         await browser.storage.local.set(configUpdate);
@@ -106,6 +99,19 @@ const ImportExport = (() => {
         } else {
           const groupId = await browser.tabs.group({ tabIds: createdTabIds });
           await browser.tabGroups.update(groupId, { title: groupName });
+        }
+      }
+    }
+
+    // Restore slot assignments: match exported group names+slots to newly created groups
+    if (data.groups) {
+      const currentGroups = await browser.tabGroups.query({});
+      for (const exportedGroup of data.groups) {
+        if (exportedGroup.slot) {
+          const match = currentGroups.find(g => g.title === exportedGroup.name);
+          if (match) {
+            await TabGroups.assignSlot(exportedGroup.slot, match.id);
+          }
         }
       }
     }

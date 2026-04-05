@@ -1,5 +1,5 @@
 /**
- * Toolbar popup — snapshot, focus mode, group overview, import/export, triage launcher.
+ * Toolbar popup — snapshot, focus mode, slot assignment, import/export, triage launcher.
  */
 (async () => {
   const msg = browser.runtime.sendMessage;
@@ -62,71 +62,95 @@
     await refreshFocus();
   });
 
-  // --- Groups ---
-  const groupsList = document.getElementById("groups-list");
+  // --- Slot assignments ---
+  const slotsList = document.getElementById("slots-list");
 
-  async function refreshGroups() {
-    const groups = await msg({ action: "getGroups" });
+  async function refreshSlots() {
+    const [assignments, allGroups] = await Promise.all([
+      msg({ action: "getSlotAssignments" }),
+      msg({ action: "getAllGroups" })
+    ]);
 
-    groupsList.innerHTML = "";
-    for (const group of groups) {
+    slotsList.innerHTML = "";
+
+    for (const entry of assignments) {
       const row = document.createElement("div");
-      row.className = "group-row";
+      row.className = "slot-row";
 
-      // Shortcut badge
-      if (group.managedIndex) {
-        const badge = document.createElement("span");
-        badge.className = "group-shortcut";
-        badge.textContent = group.managedIndex === 10 ? "0" : String(group.managedIndex);
-        badge.title = `Ctrl+Shift+${badge.textContent}`;
-        row.appendChild(badge);
+      // Key badge
+      const badge = document.createElement("span");
+      badge.className = "slot-key";
+      badge.textContent = entry.slot === 10 ? "0" : String(entry.slot);
+      badge.title = `Ctrl+Shift+${badge.textContent}`;
+      row.appendChild(badge);
+
+      // Group selector
+      const select = document.createElement("select");
+      select.className = "slot-select";
+
+      // "Unassigned" option
+      const emptyOpt = document.createElement("option");
+      emptyOpt.value = "";
+      emptyOpt.textContent = "— unassigned —";
+      select.appendChild(emptyOpt);
+
+      // One option per existing group
+      for (const group of allGroups) {
+        const opt = document.createElement("option");
+        opt.value = group.id;
+        const slotLabel = group.assignedSlot ? ` [${group.assignedSlot === 10 ? "0" : group.assignedSlot}]` : "";
+        opt.textContent = `${group.title} (${group.tabCount})${slotLabel}`;
+        if (entry.groupId === group.id) opt.selected = true;
+        select.appendChild(opt);
       }
 
-      const name = document.createElement("span");
-      name.className = "group-name";
-      name.textContent = group.title;
-      row.appendChild(name);
+      select.addEventListener("change", async () => {
+        if (select.value) {
+          await msg({ action: "assignSlot", slotNumber: entry.slot, groupId: parseInt(select.value) });
+        } else {
+          await msg({ action: "unassignSlot", slotNumber: entry.slot });
+        }
+        await refreshSlots();
+      });
 
-      const count = document.createElement("span");
-      count.className = "group-count";
-      count.textContent = `${group.tabs.length} tabs`;
-      row.appendChild(count);
+      row.appendChild(select);
 
-      // Actions
-      if (group.id !== null && group.tabs.length > 0) {
-        const actions = document.createElement("div");
-        actions.className = "group-actions";
+      // Tab count
+      if (entry.groupId) {
+        const count = document.createElement("span");
+        count.className = "slot-count";
+        count.textContent = `${entry.tabCount}`;
+        row.appendChild(count);
+      }
 
-        const sortBtn = document.createElement("button");
-        sortBtn.textContent = "Sort";
-        sortBtn.title = "Sort by age";
-        let dir = "oldest";
-        sortBtn.addEventListener("click", async () => {
-          await msg({ action: "sortByAge", groupId: group.id, direction: dir });
-          dir = dir === "oldest" ? "newest" : "oldest";
-          await refreshGroups();
-        });
-        actions.appendChild(sortBtn);
+      slotsList.appendChild(row);
 
-        row.appendChild(actions);
-
-        groupsList.appendChild(row);
-
-        // Bulk close row
+      // Bulk close row for assigned groups with tabs
+      if (entry.groupId && entry.tabCount > 0) {
         const bulkRow = document.createElement("div");
         bulkRow.className = "bulk-close-row";
         bulkRow.innerHTML = `Close older than <input type="number" min="0" value="30"> days `;
+
+        const sortBtn = document.createElement("button");
+        sortBtn.textContent = "Sort";
+        sortBtn.className = "sort-btn";
+        sortBtn.title = "Sort by age";
+        let dir = "oldest";
+        sortBtn.addEventListener("click", async () => {
+          await msg({ action: "sortByAge", groupId: entry.groupId, direction: dir });
+          dir = dir === "oldest" ? "newest" : "oldest";
+        });
+        bulkRow.appendChild(sortBtn);
+
         const closeBtn = document.createElement("button");
         closeBtn.textContent = "Close";
         closeBtn.addEventListener("click", async () => {
           const days = parseInt(bulkRow.querySelector("input").value) || 0;
-          await msg({ action: "bulkCloseOlderThan", groupId: group.id, days });
-          await refreshGroups();
+          await msg({ action: "bulkCloseOlderThan", groupId: entry.groupId, days });
+          await refreshSlots();
         });
         bulkRow.appendChild(closeBtn);
-        groupsList.appendChild(bulkRow);
-      } else {
-        groupsList.appendChild(row);
+        slotsList.appendChild(bulkRow);
       }
     }
   }
@@ -154,7 +178,7 @@
     try {
       const data = JSON.parse(await file.text());
       await msg({ action: "importAll", data });
-      await refreshGroups();
+      await refreshSlots();
     } catch (err) {
       console.error("Import failed:", err);
     }
@@ -183,6 +207,6 @@
   // --- Init ---
   await refreshSnapshot();
   await refreshFocus();
-  await refreshGroups();
+  await refreshSlots();
   await refreshUngroupedCount();
 })();

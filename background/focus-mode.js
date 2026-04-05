@@ -27,28 +27,22 @@ const FocusMode = (() => {
     // Get all tabs across all windows
     const allTabs = await browser.tabs.query({});
 
-    // Move tabs from other windows into the target window.
-    // Pinned tabs can't be moved across windows, so unpin first, move, then re-pin.
-    const otherWindowTabs = allTabs.filter(t => t.windowId !== targetWindowId);
+    // Move non-pinned tabs from other windows into the target window.
+    // Pinned tabs are left where they are — they're exempt from focus mode.
+    const otherWindowTabs = allTabs.filter(t => t.windowId !== targetWindowId && !t.pinned);
     for (const tab of otherWindowTabs) {
       try {
-        const wasPinned = tab.pinned;
-        if (wasPinned) {
-          await browser.tabs.update(tab.id, { pinned: false });
-        }
         await browser.tabs.move(tab.id, { windowId: targetWindowId, index: -1 });
-        if (wasPinned) {
-          await browser.tabs.update(tab.id, { pinned: true });
-        }
       } catch (e) {
         // Tab may have been closed; skip
       }
     }
 
-    // Close now-empty other windows
-    const windows = await browser.windows.getAll();
+    // Close other windows that have no remaining tabs (pinned tabs stayed behind,
+    // so windows with pinned tabs will still have tabs and stay open)
+    const windows = await browser.windows.getAll({ populate: true });
     for (const win of windows) {
-      if (win.id !== targetWindowId) {
+      if (win.id !== targetWindowId && win.tabs.length === 0) {
         try {
           await browser.windows.remove(win.id);
         } catch (e) {

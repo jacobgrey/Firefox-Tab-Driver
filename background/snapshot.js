@@ -13,8 +13,13 @@ const Snapshot = (() => {
     const windows = await browser.windows.getAll({ populate: true });
     const allGroups = await browser.tabGroups.query({});
 
+    // Save current slot assignments so we can remap after restore
+    const storedSlots = await browser.storage.local.get(StorageKeys.CONFIG_GROUP_ASSIGNMENTS);
+    const slotAssignments = storedSlots[StorageKeys.CONFIG_GROUP_ASSIGNMENTS] || {};
+
     const snapshot = {
       savedAt: new Date().toISOString(),
+      slotAssignments,
       windows: []
     };
 
@@ -189,7 +194,32 @@ const Snapshot = (() => {
       }
     }
 
-    // Refresh extension state
+    // Remap slot assignments: old group ID → title (from snapshot) → new group ID
+    if (snapshot.slotAssignments) {
+      // Build old groupId → title map from all snapshot windows
+      const oldIdToTitle = {};
+      for (const winData of snapshot.windows) {
+        for (const groupData of winData.groups) {
+          oldIdToTitle[groupData.id] = groupData.title;
+        }
+      }
+
+      // Build title → new groupId map from current state
+      const currentGroups = await browser.tabGroups.query({});
+      const titleToNewId = {};
+      for (const g of currentGroups) {
+        titleToNewId[g.title] = g.id;
+      }
+
+      // Remap each slot
+      for (const [slot, oldGroupId] of Object.entries(snapshot.slotAssignments)) {
+        const title = oldIdToTitle[oldGroupId];
+        if (title && titleToNewId[title] !== undefined) {
+          await TabGroups.assignSlot(parseInt(slot), titleToNewId[title]);
+        }
+      }
+    }
+
     await TabGroups.refreshManagedGroupMap();
     TabMemory.resume();
   }

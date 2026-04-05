@@ -4,7 +4,7 @@
 const StorageKeys = {
   PREFIX_AGE: "age:",
   CONFIG_MAX_LOADED_TABS: "config:maxLoadedTabs",
-  CONFIG_GROUP_NAMES: "config:groupNames",
+  CONFIG_GROUP_ASSIGNMENTS: "config:groupAssignments",
   CONFIG_FOCUS_MODE_ACTIVE: "config:focusModeActive",
 
   ageKey(url) {
