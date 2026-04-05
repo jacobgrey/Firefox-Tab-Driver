@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tab Triage</title>
+  <link rel="stylesheet" href="triage.css">
+</head>
+<body>
+  <div id="header">
+    <h1>Tab Triage</h1>
+    <div id="progress"></div>
+  </div>
+
+  <div id="current-tab">
+    <img id="tab-favicon" src="" alt="">
+    <div id="tab-info">
+      <div id="tab-title"></div>
+      <div id="tab-url"></div>
+      <div id="tab-age"></div>
+    </div>
+  </div>
+
+  <div id="groups-grid"></div>
+
+  <div id="actions">
+    <button id="btn-skip" title="Skip this tab (Spacebar)">Skip <kbd>Space</kbd></button>
+    <button id="btn-close" title="Close this tab (X)">Close <kbd>X</kbd></button>
+  </div>
+
+  <div id="done-message" hidden>
+    <p>All ungrouped tabs processed.</p>
+    <button id="btn-done-close">Close</button>
+  </div>
+
+  <script src="../shared/storage-keys.js"></script>
+  <script src="triage.js"></script>
+</body>
+</html>

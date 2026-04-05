@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tab Driver</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1>Tab Driver</h1>
+
+  <section id="snapshot-section">
+    <h2>Snapshot</h2>
+    <div id="snapshot-status"></div>
+    <div class="button-row">
+      <button id="btn-snapshot-save">Save</button>
+      <button id="btn-snapshot-restore" disabled>Restore</button>
+      <button id="btn-snapshot-clear" disabled>Clear</button>
+    </div>
+  </section>
+
+  <section id="focus-section">
+    <h2>Focus Mode</h2>
+    <button id="btn-focus">Toggle Focus</button>
+    <span id="focus-status"></span>
+  </section>
+
+  <section id="groups-section">
+    <h2>Groups</h2>
+    <div id="groups-list"></div>
+  </section>
+
+  <section id="io-section">
+    <h2>Import / Export</h2>
+    <div class="button-row">
+      <button id="btn-export">Export JSON</button>
+      <button id="btn-import">Import JSON</button>
+      <input type="file" id="import-file" accept=".json" hidden>
+    </div>
+  </section>
+
+  <section id="triage-section">
+    <button id="btn-triage">Sort Ungrouped Tabs</button>
+    <span id="ungrouped-count"></span>
+  </section>
+
+  <script src="../shared/storage-keys.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

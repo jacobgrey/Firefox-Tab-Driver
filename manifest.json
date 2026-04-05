@@ -1,0 +1,54 @@
+{
+  "manifest_version": 2,
+  "name": "Tab Driver",
+  "version": "1.0.0",
+  "description": "Tab management with memory limits, keyboard-driven group sorting, and focus mode.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "tab-driver@local",
+      "strict_min_version": "139.0"
+    }
+  },
+  "permissions": [
+    "tabs",
+    "tabGroups",
+    "storage"
+  ],
+  "background": {
+    "scripts": [
+      "shared/storage-keys.js",
+      "background/config.js",
+      "background/tab-age.js",
+      "background/tab-memory.js",
+      "background/tab-groups.js",
+      "background/focus-mode.js",
+      "background/import-export.js",
+      "background/snapshot.js",
+      "background/main.js"
+    ],
+    "persistent": true
+  },
+  "browser_action": {
+    "default_icon": "icons/icon-48.png",
+    "default_title": "Tab Driver",
+    "default_popup": "popup/popup.html"
+  },
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
+  },
+  "commands": {
+    "group-1":  { "suggested_key": { "default": "Ctrl+Shift+1" }, "description": "Move active tab to Group 1" },
+    "group-2":  { "suggested_key": { "default": "Ctrl+Shift+2" }, "description": "Move active tab to Group 2" },
+    "group-3":  { "suggested_key": { "default": "Ctrl+Shift+3" }, "description": "Move active tab to Group 3" },
+    "group-4":  { "suggested_key": { "default": "Ctrl+Shift+4" }, "description": "Move active tab to Group 4" },
+    "group-5":  { "suggested_key": { "default": "Ctrl+Shift+5" }, "description": "Move active tab to Group 5" },
+    "group-6":  { "suggested_key": { "default": "Ctrl+Shift+6" }, "description": "Move active tab to Group 6" },
+    "group-7":  { "suggested_key": { "default": "Ctrl+Shift+7" }, "description": "Move active tab to Group 7" },
+    "group-8":  { "suggested_key": { "default": "Ctrl+Shift+8" }, "description": "Move active tab to Group 8" },
+    "group-9":  { "suggested_key": { "default": "Ctrl+Shift+9" }, "description": "Move active tab to Group 9" },
+    "group-10": { "suggested_key": { "default": "Ctrl+Shift+0" }, "description": "Move active tab to Group 10" },
+    "focus-toggle": { "suggested_key": { "default": "Ctrl+Shift+F" }, "description": "Toggle focus mode" },
+    "open-triage":  { "suggested_key": { "default": "Ctrl+Shift+T" }, "description": "Open triage popup for ungrouped tabs" }
+  }
+}
