@@ -1,24 +1,22 @@
 /**
- * Triage popup — shows ungrouped tabs one at a time.
- * Press 1-9/0 to assign to a group, Space to skip, X to close the tab.
- * Auto-advances to the next ungrouped tab after each action.
+ * Triage popup — shows all ungrouped tabs in a list.
+ * The top item is the current tab to sort. Press 1-9/0 to assign to a group,
+ * Space to skip, X to close. Processed items are removed, sliding the next up.
  */
 (async () => {
   const msg = browser.runtime.sendMessage;
 
-  const tabFavicon = document.getElementById("tab-favicon");
-  const tabTitle = document.getElementById("tab-title");
-  const tabUrl = document.getElementById("tab-url");
-  const tabAge = document.getElementById("tab-age");
+  const tabListEl = document.getElementById("tab-list");
   const progress = document.getElementById("progress");
   const groupsGrid = document.getElementById("groups-grid");
-  const currentTabEl = document.getElementById("current-tab");
   const actionsEl = document.getElementById("actions");
   const doneEl = document.getElementById("done-message");
 
   let ungroupedTabs = [];
   let currentIndex = 0;
-  let slotAssignments = []; // { slot, groupId, title } for slots 1–10
+  let totalCount = 0;
+  let processedCount = 0;
+  let slotAssignments = [];
   let groupButtons = [];
 
   function formatAge(timestamp) {
@@ -28,11 +26,11 @@
     const hours = Math.floor(ms / 3600000);
     const days = Math.floor(ms / 86400000);
     const weeks = Math.floor(days / 7);
-    if (days >= 14) return `First seen ${weeks}w ago`;
-    if (days >= 1) return `First seen ${days}d ago`;
-    if (hours >= 1) return `First seen ${hours}h ago`;
-    if (minutes >= 1) return `First seen ${minutes}m ago`;
-    return "First seen just now";
+    if (days >= 14) return `${weeks}w`;
+    if (days >= 1) return `${days}d`;
+    if (hours >= 1) return `${hours}h`;
+    if (minutes >= 1) return `${minutes}m`;
+    return "new";
   }
 
   async function loadData() {
@@ -41,6 +39,8 @@
       msg({ action: "getSlotAssignments" })
     ]);
     currentIndex = 0;
+    totalCount = ungroupedTabs.length;
+    processedCount = 0;
   }
 
   function buildGroupGrid() {
@@ -68,35 +68,70 @@
     }
   }
 
-  function showCurrent() {
+  function renderList() {
+    tabListEl.innerHTML = "";
+
     if (currentIndex >= ungroupedTabs.length) {
       showDone();
       return;
     }
 
-    const tab = ungroupedTabs[currentIndex];
+    const remaining = ungroupedTabs.length - currentIndex;
+    progress.textContent = `${processedCount} done, ${remaining} left`;
 
-    tabFavicon.src = tab.favIconUrl || "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>";
-    tabFavicon.onerror = () => { tabFavicon.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>"; };
-    tabTitle.textContent = tab.title || tab.url || "New Tab";
-
-    tabUrl.textContent = tab.url || "";
-
-    tabAge.textContent = formatAge(tab.age);
-    progress.textContent = `${currentIndex + 1} / ${ungroupedTabs.length}`;
-
-    currentTabEl.hidden = false;
+    tabListEl.hidden = false;
     groupsGrid.hidden = false;
     actionsEl.hidden = false;
     doneEl.hidden = true;
+
+    // Render visible tabs starting from currentIndex
+    for (let i = currentIndex; i < ungroupedTabs.length; i++) {
+      const tab = ungroupedTabs[i];
+      const isCurrent = i === currentIndex;
+
+      const row = document.createElement("div");
+      row.className = "tab-row" + (isCurrent ? " current" : "");
+
+      const favicon = document.createElement("img");
+      favicon.className = "tab-favicon";
+      favicon.src = tab.favIconUrl || "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>";
+      favicon.onerror = () => { favicon.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>"; };
+      row.appendChild(favicon);
+
+      const info = document.createElement("div");
+      info.className = "tab-info";
+
+      const title = document.createElement("div");
+      title.className = "tab-title";
+      title.textContent = tab.title || tab.url || "New Tab";
+      info.appendChild(title);
+
+      const url = document.createElement("div");
+      url.className = "tab-url";
+      url.textContent = tab.url || "";
+      info.appendChild(url);
+
+      row.appendChild(info);
+
+      const age = document.createElement("span");
+      age.className = "tab-age";
+      age.textContent = formatAge(tab.age);
+      row.appendChild(age);
+
+      tabListEl.appendChild(row);
+    }
+
+    // Scroll the current item into view
+    const currentRow = tabListEl.querySelector(".current");
+    if (currentRow) currentRow.scrollIntoView({ block: "nearest" });
   }
 
   function showDone() {
-    currentTabEl.hidden = true;
+    tabListEl.hidden = true;
     groupsGrid.hidden = true;
     actionsEl.hidden = true;
     doneEl.hidden = false;
-    progress.textContent = "Done";
+    progress.textContent = `${processedCount} done`;
   }
 
   function flashButton(index) {
@@ -116,6 +151,7 @@
     } catch (e) {
       // Tab may have been closed since triage loaded; skip it
     }
+    processedCount++;
     advance();
   }
 
@@ -131,22 +167,19 @@
     } catch (e) {
       // Already closed
     }
-    // Remove from list rather than advancing index
+    processedCount++;
     ungroupedTabs.splice(currentIndex, 1);
-    // Don't increment — currentIndex now points to the next tab
-    showCurrent();
+    renderList();
   }
 
   function advance() {
     currentIndex++;
-    showCurrent();
+    renderList();
   }
 
   // --- Keyboard handler ---
   document.addEventListener("keydown", (e) => {
     if (currentIndex >= ungroupedTabs.length) return;
-
-    // Don't capture in inputs
     if (e.target.tagName === "INPUT") return;
 
     const key = e.key;
@@ -166,17 +199,12 @@
     }
   });
 
-  // --- Close button in done state ---
-  document.getElementById("btn-done-close").addEventListener("click", () => {
-    window.close();
-  });
-
-  // --- Skip and Close buttons ---
+  document.getElementById("btn-done-close").addEventListener("click", () => window.close());
   document.getElementById("btn-skip").addEventListener("click", skip);
   document.getElementById("btn-close").addEventListener("click", closeTab);
 
   // --- Init ---
   await loadData();
   buildGroupGrid();
-  showCurrent();
+  renderList();
 })();

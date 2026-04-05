@@ -35,7 +35,7 @@ browser.commands.onCommand.addListener(async (command) => {
     await browser.windows.create({
       url: browser.runtime.getURL("triage/triage.html"),
       type: "popup",
-      width: 420,
+      width: 680,
       height: 520
     });
     return;

@@ -9,15 +9,19 @@ body {
   font-size: 13px;
   color: #e0e0e0;
   background: #1c1b22;
-  padding: 16px;
+  padding: 12px;
   user-select: none;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
 #header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 h1 {
@@ -30,73 +34,112 @@ h1 {
   color: #888;
 }
 
-/* --- Current tab display --- */
-#current-tab {
+/* --- Main layout: list left, controls right --- */
+#main {
   display: flex;
-  align-items: flex-start;
   gap: 10px;
-  padding: 12px;
-  background: #2b2a33;
+  flex: 1;
+  min-height: 0;
+}
+
+/* --- Tab list (left) --- */
+#tab-list {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #2b2a33;
   border-radius: 6px;
-  margin-bottom: 16px;
-  min-height: 60px;
+  min-width: 0;
 }
 
-#tab-favicon {
-  width: 24px;
-  height: 24px;
-  border-radius: 3px;
+.tab-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #232228;
+}
+
+.tab-row:last-child {
+  border-bottom: none;
+}
+
+.tab-row.current {
+  background: #2b2a44;
+  border-left: 3px solid #5b48d4;
+  padding-left: 7px;
+}
+
+.tab-favicon {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
   flex-shrink: 0;
-  margin-top: 2px;
 }
 
-#tab-info {
+.tab-info {
   flex: 1;
   min-width: 0;
 }
 
-#tab-title {
-  font-size: 14px;
-  font-weight: 500;
+.tab-title {
+  font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 2px;
 }
 
-#tab-url {
-  font-size: 11px;
-  color: #888;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 2px;
+.current .tab-title {
+  font-weight: 600;
 }
 
-#tab-age {
+.tab-url {
   font-size: 10px;
   color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* --- Group grid --- */
+.current .tab-url {
+  color: #888;
+}
+
+.tab-age {
+  font-size: 10px;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.current .tab-age {
+  color: #888;
+}
+
+/* --- Controls (right) --- */
+#controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  width: 170px;
+}
+
 #groups-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .group-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 10px;
+  padding: 5px 8px;
   background: #2b2a33;
   border: 1px solid #3a3944;
   border-radius: 4px;
   color: #ccc;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   text-align: left;
   transition: background 0.1s, border-color 0.1s;
 }
@@ -116,13 +159,13 @@ h1 {
 }
 
 .group-btn .key {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: #7b68ee;
   background: #1c1b22;
   border-radius: 3px;
-  padding: 2px 6px;
-  min-width: 20px;
+  padding: 2px 5px;
+  min-width: 18px;
   text-align: center;
 }
 
@@ -133,16 +176,24 @@ h1 {
   text-overflow: ellipsis;
 }
 
+.group-btn.flash {
+  background: #5b48d4;
+  border-color: #7b68ee;
+  color: #fff;
+  transition: none;
+}
+
 /* --- Actions --- */
 #actions {
   display: flex;
-  gap: 8px;
-  justify-content: center;
+  gap: 4px;
+  margin-top: auto;
 }
 
 #actions button {
-  font-size: 12px;
-  padding: 6px 16px;
+  flex: 1;
+  font-size: 11px;
+  padding: 5px 0;
   border: 1px solid #4a4955;
   border-radius: 4px;
   background: #38374a;
@@ -155,9 +206,9 @@ h1 {
 }
 
 #actions button kbd {
-  font-size: 10px;
+  font-size: 9px;
   color: #888;
-  margin-left: 4px;
+  margin-left: 2px;
 }
 
 #btn-close {
@@ -190,14 +241,6 @@ h1 {
   background: #38374a;
   color: #ccc;
   cursor: pointer;
-}
-
-/* Flash feedback on key press */
-.group-btn.flash {
-  background: #5b48d4;
-  border-color: #7b68ee;
-  color: #fff;
-  transition: none;
 }
 
 /* Scrollbar */
