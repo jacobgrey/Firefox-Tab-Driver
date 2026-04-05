@@ -49,6 +49,6 @@
     "group-9":  { "suggested_key": { "default": "Ctrl+Shift+9" }, "description": "Move active tab to Group 9" },
     "group-10": { "suggested_key": { "default": "Ctrl+Shift+0" }, "description": "Move active tab to Group 10" },
     "focus-toggle": { "suggested_key": { "default": "Ctrl+Shift+F" }, "description": "Toggle focus mode" },
-    "open-triage":  { "suggested_key": { "default": "Ctrl+Shift+T" }, "description": "Open triage popup for ungrouped tabs" }
+    "open-triage":  { "suggested_key": { "default": "Ctrl+Shift+U" }, "description": "Open triage popup for ungrouped tabs" }
   }
 }

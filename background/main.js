@@ -116,16 +116,20 @@ browser.runtime.onMessage.addListener((message) => {
 });
 
 /**
- * Get ungrouped tabs in the current window.
+ * Get ungrouped tabs across all windows (excluding extension pages).
  */
 async function getUngroupedTabs() {
   const tabs = await browser.tabs.query({});
+  const extensionOrigin = browser.runtime.getURL("");
   const allAges = await TabAge.getAges(
     tabs.filter(t => t.url).map(t => t.url)
   );
 
   return tabs
-    .filter(t => t.groupId === -1 || t.groupId === undefined)
+    .filter(t =>
+      (t.groupId === -1 || t.groupId === undefined) &&
+      (!t.url || !t.url.startsWith(extensionOrigin))
+    )
     .map(t => ({
       id: t.id,
       url: t.url,

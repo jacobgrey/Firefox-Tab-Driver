@@ -102,7 +102,7 @@ const TabGroups = (() => {
   }
 
   /**
-   * Get all groups with their tabs for sidebar display.
+   * Get all groups with their tabs for popup display.
    * Returns both managed and unmanaged groups.
    */
   async function getGroupsWithTabs() {

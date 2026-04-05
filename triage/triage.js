@@ -50,7 +50,17 @@
     for (let i = 0; i < groupNames.length; i++) {
       const btn = document.createElement("button");
       btn.className = "group-btn";
-      btn.innerHTML = `<span class="key">${i === 9 ? "0" : String(i + 1)}</span><span class="name">${groupNames[i]}</span>`;
+
+      const keySpan = document.createElement("span");
+      keySpan.className = "key";
+      keySpan.textContent = i === 9 ? "0" : String(i + 1);
+      btn.appendChild(keySpan);
+
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "name";
+      nameSpan.textContent = groupNames[i];
+      btn.appendChild(nameSpan);
+
       btn.addEventListener("click", () => assignToGroup(i + 1));
       groupsGrid.appendChild(btn);
       groupButtons.push(btn);
@@ -104,7 +114,11 @@
     if (!tab) return;
 
     flashButton(groupIndex - 1);
-    await msg({ action: "moveTab", tabId: tab.id, groupIndex });
+    try {
+      await msg({ action: "moveTab", tabId: tab.id, groupIndex });
+    } catch (e) {
+      // Tab may have been closed since triage loaded; skip it
+    }
     advance();
   }
 
