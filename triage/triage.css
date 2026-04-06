@@ -29,6 +29,20 @@ h1 {
   font-weight: 600;
 }
 
+#source-select {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: #2b2a33;
+  border: 1px solid #4a4955;
+  border-radius: 3px;
+  color: #ccc;
+}
+
+#source-select:focus {
+  border-color: #5b48d4;
+  outline: none;
+}
+
 #progress {
   font-size: 12px;
   color: #888;

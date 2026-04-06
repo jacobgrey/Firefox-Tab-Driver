@@ -58,6 +58,9 @@ browser.runtime.onMessage.addListener((message) => {
     case "getUngroupedTabs":
       return getUngroupedTabs();
 
+    case "getGroupTabs":
+      return getGroupTabs(message.groupId);
+
     case "getSlotAssignments":
       return TabGroups.getSlotAssignments();
 
@@ -147,6 +150,25 @@ async function getUngroupedTabs() {
       active: t.active,
       age: allAges[t.url] || null
     }));
+}
+
+/**
+ * Get tabs in a specific group.
+ */
+async function getGroupTabs(groupId) {
+  const tabs = await browser.tabs.query({ groupId });
+  const allAges = await TabAge.getAges(
+    tabs.filter(t => t.url).map(t => t.url)
+  );
+
+  return tabs.map(t => ({
+    id: t.id,
+    url: t.url,
+    title: t.title,
+    favIconUrl: t.favIconUrl,
+    active: t.active,
+    age: allAges[t.url] || null
+  }));
 }
 
 /**

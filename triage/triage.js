@@ -1,23 +1,27 @@
 /**
- * Triage popup — shows all ungrouped tabs in a list.
- * The top item is the current tab to sort. Press 1-9/0 to assign to a group,
- * Space to skip, X to close. Processed items are removed, sliding the next up.
+ * Triage popup — browse and sort tabs from any group or ungrouped.
+ * Dropdown selects the source (defaults to ungrouped).
+ * Press 1-9/0 to assign to a group, Space to skip, X to close tab.
  */
 (async () => {
   const msg = browser.runtime.sendMessage;
 
+  const sourceSelect = document.getElementById("source-select");
   const tabListEl = document.getElementById("tab-list");
   const progress = document.getElementById("progress");
   const groupsGrid = document.getElementById("groups-grid");
   const actionsEl = document.getElementById("actions");
   const doneEl = document.getElementById("done-message");
 
-  let ungroupedTabs = [];
+  let tabs = [];
   let currentIndex = 0;
-  let totalCount = 0;
   let processedCount = 0;
   let slotAssignments = [];
   let groupButtons = [];
+  let allGroups = []; // for the source dropdown
+
+  // Current source: null = ungrouped, number = groupId
+  let sourceGroupId = null;
 
   function formatAge(timestamp) {
     if (!timestamp) return "";
@@ -33,15 +37,45 @@
     return "new";
   }
 
-  async function loadData() {
-    [ungroupedTabs, slotAssignments] = await Promise.all([
-      msg({ action: "getUngroupedTabs" }),
-      msg({ action: "getSlotAssignments" })
+  async function loadGroups() {
+    [slotAssignments, allGroups] = await Promise.all([
+      msg({ action: "getSlotAssignments" }),
+      msg({ action: "getAllGroups" })
     ]);
+  }
+
+  async function loadTabs() {
+    if (sourceGroupId === null) {
+      tabs = await msg({ action: "getUngroupedTabs" });
+    } else {
+      tabs = await msg({ action: "getGroupTabs", groupId: sourceGroupId });
+    }
     currentIndex = 0;
-    totalCount = ungroupedTabs.length;
     processedCount = 0;
   }
+
+  function buildSourceDropdown() {
+    sourceSelect.innerHTML = "";
+
+    const ungroupedOpt = document.createElement("option");
+    ungroupedOpt.value = "";
+    ungroupedOpt.textContent = "Ungrouped tabs";
+    sourceSelect.appendChild(ungroupedOpt);
+
+    for (const group of allGroups) {
+      const opt = document.createElement("option");
+      opt.value = group.id;
+      opt.textContent = `${group.title} (${group.tabCount})`;
+      if (sourceGroupId === group.id) opt.selected = true;
+      sourceSelect.appendChild(opt);
+    }
+  }
+
+  sourceSelect.addEventListener("change", async () => {
+    sourceGroupId = sourceSelect.value ? parseInt(sourceSelect.value) : null;
+    await loadTabs();
+    renderList();
+  });
 
   function buildGroupGrid() {
     groupsGrid.innerHTML = "";
@@ -71,12 +105,12 @@
   function renderList() {
     tabListEl.innerHTML = "";
 
-    if (currentIndex >= ungroupedTabs.length) {
+    if (currentIndex >= tabs.length) {
       showDone();
       return;
     }
 
-    const remaining = ungroupedTabs.length - currentIndex;
+    const remaining = tabs.length - currentIndex;
     progress.textContent = `${processedCount} done, ${remaining} left`;
 
     tabListEl.hidden = false;
@@ -84,9 +118,8 @@
     actionsEl.hidden = false;
     doneEl.hidden = true;
 
-    // Render visible tabs starting from currentIndex
-    for (let i = currentIndex; i < ungroupedTabs.length; i++) {
-      const tab = ungroupedTabs[i];
+    for (let i = currentIndex; i < tabs.length; i++) {
+      const tab = tabs[i];
       const isCurrent = i === currentIndex;
 
       const row = document.createElement("div");
@@ -121,7 +154,6 @@
       tabListEl.appendChild(row);
     }
 
-    // Scroll the current item into view
     const currentRow = tabListEl.querySelector(".current");
     if (currentRow) currentRow.scrollIntoView({ block: "nearest" });
   }
@@ -142,7 +174,7 @@
   }
 
   async function assignToGroup(groupIndex) {
-    const tab = ungroupedTabs[currentIndex];
+    const tab = tabs[currentIndex];
     if (!tab) return;
 
     flashButton(groupIndex - 1);
@@ -160,7 +192,7 @@
   }
 
   async function closeTab() {
-    const tab = ungroupedTabs[currentIndex];
+    const tab = tabs[currentIndex];
     if (!tab) return;
     try {
       await browser.tabs.remove(tab.id);
@@ -168,7 +200,7 @@
       // Already closed
     }
     processedCount++;
-    ungroupedTabs.splice(currentIndex, 1);
+    tabs.splice(currentIndex, 1);
     renderList();
   }
 
@@ -179,8 +211,8 @@
 
   // --- Keyboard handler ---
   document.addEventListener("keydown", (e) => {
-    if (currentIndex >= ungroupedTabs.length) return;
-    if (e.target.tagName === "INPUT") return;
+    if (currentIndex >= tabs.length) return;
+    if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
 
     const key = e.key;
 
@@ -204,7 +236,9 @@
   document.getElementById("btn-close").addEventListener("click", closeTab);
 
   // --- Init ---
-  await loadData();
+  await loadGroups();
+  await loadTabs();
+  buildSourceDropdown();
   buildGroupGrid();
   renderList();
 })();
