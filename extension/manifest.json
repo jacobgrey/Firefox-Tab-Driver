@@ -8,8 +8,8 @@
       "id": "tab-driver@local",
       "strict_min_version": "139.0",
       "data_collection_permissions": {
-        "telemetry": false,
-        "experiments": false
+        "required": ["none"],
+        "optional": []
       }
     }
   },
