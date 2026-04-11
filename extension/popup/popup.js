@@ -129,7 +129,12 @@
       if (entry.groupId && entry.tabCount > 0) {
         const bulkRow = document.createElement("div");
         bulkRow.className = "bulk-close-row";
-        bulkRow.innerHTML = `Close older than <input type="number" min="0" value="30"> days `;
+        bulkRow.append("Close older than ");
+        const daysInput = document.createElement("input");
+        daysInput.type = "number";
+        daysInput.min = "0";
+        daysInput.value = "30";
+        bulkRow.append(daysInput, " days ");
 
         const sortBtn = document.createElement("button");
         sortBtn.textContent = "Sort";
