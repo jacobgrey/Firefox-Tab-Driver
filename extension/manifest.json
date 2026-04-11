@@ -6,7 +6,11 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "tab-driver@local",
-      "strict_min_version": "139.0"
+      "strict_min_version": "139.0",
+      "data_collection_permissions": {
+        "telemetry": false,
+        "experiments": false
+      }
     }
   },
   "permissions": [
