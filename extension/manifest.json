@@ -5,7 +5,7 @@
   "description": "Tab management with memory limits, keyboard-driven group sorting, and focus mode.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "tab-driver@local",
+      "id": "tab-driver@jacobgrey",
       "strict_min_version": "139.0",
       "data_collection_permissions": {
         "required": ["none"],
